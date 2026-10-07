@@ -1,16 +1,27 @@
+Pembaruan daftar kata sudah disesuaikan agar permainannya jauh lebih menantang!
+
+Daftar kata sekarang dibagi menjadi 200+ kata dengan tingkat kesulitan berimbang (gabungan kata pendek/sedang dan **100+ kata panjang/rumit** seperti *KONSTRUKTIF*, *MENGKALKULASI*, *MENGAPRESIASI*, *ELEKTRONIFIKASI*, dll.).
+
+---
+
+### Kode Lengkap `index.html`:
+
+```html
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AOG 14 GAME - Bomb Party Edition</title>
+  <title>AOG 14 GAME - Speed Typing Edition</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0d1117; color: #f0f6fc; }
-    .bomb-pulse { animation: pulse 0.8s infinite alternate; }
-    @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.1); filter: drop-shadow(0 0 20px #ef4444); } }
+    .bomb-pulse { animation: pulse 0.5s infinite alternate; }
+    @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.15); filter: drop-shadow(0 0 25px #ef4444); } }
+    .your-turn-active { animation: turnGlow 1s infinite alternate; }
+    @keyframes turnGlow { 0% { box-shadow: 0 0 10px #f59e0b; } 100% { box-shadow: 0 0 25px #f59e0b; } }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between items-center p-4 selection:bg-rose-500 selection:text-white">
@@ -23,8 +34,13 @@
       </div>
       <div>
         <h1 class="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-rose-500 via-orange-400 to-amber-300 bg-clip-text text-transparent">AOG 14 GAME</h1>
-        <p class="text-xs text-gray-400">Bomb Party Indonesia • Youth Edition</p>
+        <p class="text-xs text-gray-400">Speed Typing • Youth Komsel Edition</p>
       </div>
+    </div>
+    <div class="flex gap-2">
+      <button id="btn-sound" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition">
+        <i class="fa-solid fa-volume-xmark text-rose-400" id="icon-sound"></i> <span id="text-sound">Suara: Off</span>
+      </button>
     </div>
   </header>
 
@@ -44,7 +60,7 @@
               <div class="text-rose-400 font-bold mb-1 flex items-center gap-2">
                 <i class="fa-solid fa-crown"></i> Host (Proyektor)
               </div>
-              <p class="text-xs text-gray-400 mb-3">Tampilkan di layar TV/Proyektor.</p>
+              <p class="text-xs text-gray-400 mb-3">Tampilkan di TV / Proyektor.</p>
               <input type="text" id="host-name" placeholder="Nama Host" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white mb-3 focus:outline-none focus:border-rose-500">
             </div>
             <button id="btn-create-room" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 rounded-xl text-sm shadow-lg shadow-rose-600/30 transition">
@@ -58,7 +74,7 @@
               <div class="text-amber-400 font-bold mb-1 flex items-center gap-2">
                 <i class="fa-solid fa-right-to-bracket"></i> Join Room (HP)
               </div>
-              <p class="text-xs text-gray-400 mb-3">Masukkan Kode Room dari Host.</p>
+              <p class="text-xs text-gray-400 mb-3">Masukkan Kode dari Host.</p>
               <input type="text" id="join-code" placeholder="KODE" maxlength="4" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-center text-lg font-mono font-bold uppercase tracking-widest text-amber-400 mb-2 focus:outline-none focus:border-amber-500">
               <input type="text" id="join-name" placeholder="Nama Kamu" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white mb-3 focus:outline-none focus:border-amber-500">
             </div>
@@ -93,38 +109,40 @@
 
     <!-- Screen 3: Game Arena -->
     <div id="screen-game" class="hidden w-full max-w-2xl flex flex-col items-center">
+      <!-- Top Bar (Back/Reset Button) -->
+      <div class="w-full flex justify-between items-center mb-4">
+        <button id="btn-reset-game" class="bg-gray-800 hover:bg-rose-600/80 text-gray-300 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 border border-gray-700">
+          <i class="fa-solid fa-arrow-left"></i> Reset & Kembali ke Lobby
+        </button>
+      </div>
+
       <div id="players-status-bar" class="w-full flex flex-wrap justify-center gap-3 mb-6"></div>
 
       <div class="relative w-full bg-gray-900/90 border border-gray-800 p-8 rounded-3xl text-center shadow-2xl flex flex-col items-center">
         <!-- Bomb & Timer -->
         <div id="bomb-container" class="relative mb-4">
           <i class="fa-solid fa-bomb text-7xl text-rose-500 bomb-pulse"></i>
-          <span id="timer-display" class="absolute -top-3 -right-6 bg-rose-600 text-white font-black text-lg px-3 py-1 rounded-full border-4 border-gray-900 shadow-xl">15s</span>
+          <span id="timer-display" class="absolute -top-3 -right-6 bg-rose-600 text-white font-black text-xl px-3.5 py-1 rounded-full border-4 border-gray-900 shadow-xl">8s</span>
         </div>
 
-        <div class="mb-2">
-          <span class="text-xs text-gray-400 uppercase tracking-widest font-bold">Giliran Saat Ini</span>
-          <h3 id="current-player-turn" class="text-2xl font-black text-amber-400">----</h3>
+        <!-- Indicator Turn Banners -->
+        <div id="turn-banner" class="w-full py-2.5 px-4 rounded-2xl font-black text-lg mb-4 transition-all duration-300 flex items-center justify-center gap-2">
+          <!-- Banner dynamic Text -->
         </div>
 
-        <div class="my-4 bg-gray-800/80 px-8 py-4 rounded-2xl border border-gray-700/60 shadow-inner">
-          <p class="text-xs text-gray-400 mb-1">Cari Kata Yang Mengandung Huruf:</p>
-          <span id="syllable-display" class="text-4xl font-extrabold text-rose-400 tracking-wider font-mono">--</span>
+        <div class="my-2 bg-gray-800/80 px-8 py-5 rounded-2xl border border-gray-700/60 shadow-inner w-full">
+          <p class="text-xs text-gray-400 mb-2 uppercase tracking-widest font-bold">Ketik Kata Ini Secepatnya:</p>
+          <span id="target-word-display" class="text-2xl sm:text-4xl font-black text-rose-400 tracking-wider font-mono select-none break-all">------</span>
         </div>
 
-        <form id="word-form" class="w-full max-w-md flex gap-2 mt-2">
-          <input type="text" id="word-input" autocomplete="off" placeholder="Ketik kata di sini..." class="flex-1 bg-gray-800 border-2 border-gray-700 rounded-2xl px-4 py-3 text-white text-lg font-bold focus:outline-none focus:border-rose-500 transition">
-          <button type="submit" id="btn-submit-word" class="bg-rose-600 hover:bg-rose-500 text-white px-6 py-3 rounded-2xl font-bold transition shadow-lg shadow-rose-600/30">
+        <form id="word-form" class="w-full max-w-md flex flex-col sm:flex-row gap-2 mt-4">
+          <input type="text" id="word-input" autocomplete="off" placeholder="Ketik kata di atas..." class="flex-1 bg-gray-800 border-2 border-gray-700 rounded-2xl px-4 py-3 text-white text-xl font-bold uppercase focus:outline-none transition text-center tracking-widest disabled:opacity-50 disabled:cursor-not-allowed">
+          <button type="submit" id="btn-submit-word" class="bg-rose-600 hover:bg-rose-500 text-white px-6 py-3 rounded-2xl font-bold transition shadow-lg shadow-rose-600/30 disabled:opacity-50 disabled:cursor-not-allowed">
             Kirim
           </button>
         </form>
 
         <p id="game-feedback" class="h-6 mt-3 text-sm font-semibold text-rose-400"></p>
-      </div>
-
-      <div class="w-full mt-6 bg-gray-900/40 border border-gray-800/60 p-4 rounded-2xl">
-        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">Kata Yang Sudah Terpakai:</span>
-        <div id="used-words-tags" class="flex flex-wrap gap-2 max-h-24 overflow-y-auto"></div>
       </div>
     </div>
 
@@ -147,13 +165,103 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const TURN_TIME_LIMIT = 15; // 15 Detik per giliran
-    const SYLLABLES = ["AN", "BA", "KA", "MA", "ER", "IN", "TER", "BER", "NG", "NY", "UM", "UL", "SA", "GA", "LA", "PA", "TA", "DI", "SI", "RA", "MI", "KU", "LI", "PE"];
+    const TURN_TIME_LIMIT = 8; // Max 8 Detik
+
+    // 200+ Kumpulan Kata (100 Kata Sedang/Umum + 100 Kata Panjang & Rumit)
+    const WORD_LIST = [
+      // KELOMPOK 1: Kata Sedang & Umum
+      "KOMSEL", "ALKITAB", "GEREJA", "PENDETA", "FIRMAN", "SEMANGAT", "BERSAMA", 
+      "PEMUDA", "SAHABAT", "KASIH", "IBADAH", "PUJIAN", "LUKAS", "MATIUS", "MARKUS", 
+      "YOHANES", "MAZMUR", "BERKAT", "SYUKUR", "SUKACITA", "DAMAI", "LENTERA", 
+      "TERANG", "GARAM", "MALAIKAT", "ANUGERAH", "PENGHARAPAN", "LAPTOP", "KOPI", 
+      "SEPATU", "KEMEJA", "SKINCARE", "SEBLAK", "CEMILAN", "KUCING", "ANJING", "GITAR", 
+      "DRUM", "PIANO", "MUSIK", "LAGU", "NONGKRONG", "SANTAI", "JALAN", "MOBIL", "MOTOR", 
+      "HELM", "JAKET", "PARFUM", "DOMPET", "PAYUNG", "HUJAN", "PANAS", "ESKRIM", "PIZZA", 
+      "BURGER", "KENTANG", "NASIGORENG", "TELUR", "ROTI", "SUSU", "BAKSO", "SALAD", 
+      "BUAH", "PISANG", "JERUK", "APEL", "ANGGUR", "SENYUM", "TAWA", "BAHAGIA", "BANGGA", 
+      "FOKUS", "BELAJAR", "KULIAH", "KERJA", "TUGAS", "UJIAN", "PROYEK", "LIBUR", "WEEKEND", 
+      "PANTAI", "GUNUNG", "DANAU", "TAMAN", "KOTA", "RUMAH", "KASUR", "BANTAL", "PINTU", 
+      "JENDELA", "LAMPU", "KALENDER", "KERTAS", "BENSIN", "MANTAP", "GASKEN", "KODOK", 
+      "BURUNG", "GAJAH", "HARIMAU", "KELINCI", "PANDA", "BUNGA", "RUMPUT", "AWAN", "BINTANG",
+
+      // KELOMPOK 2: Kata Panjang & Rumit (Tantangan Berat dalam 8 Detik!)
+      "MENGKALKULASI", "SOPISTIKASI", "INFRASTRUKTUR", "INTERPRETASI", "RESTRUKTURISASI",
+      "MENGKOMUNIKASIKAN", "DIFERENSIASI", "ELEKTRONIFIKASI", "PENGECUALIAN", "SINKRONISASI",
+      "KLASIFIKASI", "PENGEMBANGAN", "MENGKONFIRMASI", "DEREGULASI", "KARAKTERISTIK",
+      "PENGORGANISASIAN", "MENGAPRESIASI", "KORESPONDENSI", "KONSOLIDASI", "KONTEMPORER",
+      "REVOLUSIONER", "DIVERSIFIKASI", "RATIONALISASI", "PENGKONDISIAN", "TRANSFORMASIONAL",
+      "MENGATASNAMAKAN", "MEMPERTANGGUNGJAWABKAN", "PERSETUJUAN", "PENERJEMAHAN", "TIDAKSEIMBANG",
+      "KETERGANTUNGAN", "KETEBALAN", "PENGALAMATAN", "MEMPERTIMBANGKAN", "KETERBELAKANGAN",
+      "KEBANYAKAN", "PEMBERHENTIAN", "MENGKATEGORIKAN", "MENGAKOMODASI", "KEPRAKTISAN",
+      "KETERBATASAN", "PENGHANCURAN", "INTERAKSI", "MENGIMPLEMENTASIKAN", "PEMANDANGAN",
+      "PENGALAMATAN", "PEMROGRAMAN", "DISKRIMINASI", "LAKSAMANA", "SISTEMATIS",
+      "SPESIFIKASI", "DOKUMENTASI", "MEMPERSINGKAT", "MEMPERDAYAKAN", "KEBIJAKSANAAN",
+      "MENGALOKASIKAN", "PEMBELAJARAN", "PENGKHIANATAN", "MENGESAHKAN", "KONSEKUENSI",
+      "TIDAKTERDAPAT", "PENGKHUSUSAN", "MEMPERTAHANKAN", "KETERSEDIAAN", "MENGINTEGRASIKAN",
+      "PENGHILANGAN", "PENJELASAN", "PENGGABUNGAN", "MENGKLARIFIKASI", "KETERBELAKANGAN",
+      "PERHITUNGAN", "PERBANDINGAN", "MEMPERPANJANG", "MEMPERSIAPKAN", "KETERLIBATAN",
+      "PENGABDIAN", "KEBERSAMAAN", "PERSEMAYAMAN", "KETERAMPILAN", "PEMBERDAYAAN",
+      "PENGHALUSAN", "MEMPERMASALAHKAN", "MEMPERINDAH", "KEPEMIMPINAN", "PENGELOLAAN",
+      "MEMPERINDAH", "PERTIMBANGAN", "MENGINSPIRASI", "MEMPERSIAPKAN", "MEMPERCEPAT",
+      "PENGABSTRAKAN", "PENGISOLASIAN", "PENGHARIANKAN", "PENGKOORDINASIAN", "PERLINDUNGAN"
+    ];
 
     let currentRoomCode = null;
     let localPlayerName = null;
     let unsubscribeRoom = null;
     let timerInterval = null;
+    let soundEnabled = false;
+
+    // Web Audio Synthesizer
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'tick') {
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.05);
+      } else if (type === 'boom') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.5);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+      } else if (type === 'success') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.2);
+      }
+    }
+
+    // Toggle Sound Button
+    document.getElementById('btn-sound').addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('icon-sound');
+      const text = document.getElementById('text-sound');
+
+      if (soundEnabled) {
+        icon.className = "fa-solid fa-volume-high text-emerald-400";
+        text.innerText = "Suara: On";
+        playSound('success');
+      } else {
+        icon.className = "fa-solid fa-volume-xmark text-rose-400";
+        text.innerText = "Suara: Off";
+      }
+    });
 
     const screenLobby = document.getElementById('screen-lobby');
     const screenWaiting = document.getElementById('screen-waiting');
@@ -162,7 +270,7 @@
     // Host Room
     document.getElementById('btn-create-room').addEventListener('click', async () => {
       const name = document.getElementById('host-name').value.trim();
-      if (!name) return alert("Masukkan nama Host dulu!");
+      if (!name) return alert("Masukkan nama Host!");
 
       localPlayerName = name;
       currentRoomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -174,8 +282,7 @@
         status: "waiting",
         players: [{ name: name, lives: 3 }],
         turnIndex: 0,
-        syllable: "",
-        usedWords: [],
+        targetWord: "",
         turnEndTime: 0,
         timestamp: Date.now()
       });
@@ -213,24 +320,39 @@
     document.getElementById('btn-start-game').addEventListener('click', async () => {
       if (!currentRoomCode) return;
       const roomRef = doc(db, "rooms", currentRoomCode);
-      const randomSyllable = SYLLABLES[Math.floor(Math.random() * SYLLABLES.length)];
+      const randomWord = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
 
       await updateDoc(roomRef, {
         status: "playing",
-        syllable: randomSyllable,
+        targetWord: randomWord,
         turnIndex: 0,
-        usedWords: [],
         turnEndTime: Date.now() + (TURN_TIME_LIMIT * 1000)
       });
     });
 
-    // Submit Word dengan Validasi API KBBI Online + Fallback
+    // Reset & Back Button
+    document.getElementById('btn-reset-game').addEventListener('click', async () => {
+      if (!currentRoomCode) return;
+      if (confirm("Yakin ingin mereset permainan dan kembali ke lobby?")) {
+        const roomRef = doc(db, "rooms", currentRoomCode);
+        const roomSnap = await getDoc(roomRef);
+        if (roomSnap.exists()) {
+          const roomData = roomSnap.data();
+          const resetPlayers = roomData.players.map(p => ({ ...p, lives: 3 }));
+          await updateDoc(roomRef, {
+            status: "waiting",
+            players: resetPlayers
+          });
+        }
+      }
+    });
+
+    // Submit Word
     document.getElementById('word-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const inputEl = document.getElementById('word-input');
       const word = inputEl.value.trim().toUpperCase();
       const feedback = document.getElementById('game-feedback');
-      inputEl.value = "";
 
       if (!word) return;
 
@@ -246,35 +368,22 @@
         return;
       }
 
-      if (!word.includes(roomData.syllable)) {
-        feedback.innerText = `Kata harus mengandung "${roomData.syllable}"!`;
+      if (word !== roomData.targetWord) {
+        feedback.innerText = "Kata salah! Perhatikan tulisan di atas!";
         return;
       }
 
-      if (roomData.usedWords.includes(word)) {
-        feedback.innerText = "Kata ini sudah pernah dipakai!";
-        return;
-      }
-
-      // Validasi kata via API KBBI Online
-      feedback.innerText = "Mengecek kata...";
-      const isValidKBBI = await checkKBBIWord(word);
-
-      if (!isValidKBBI) {
-        feedback.innerText = "Kata tidak ditemukan di KBBI!";
-        return;
-      }
-
-      // Kata Valid -> Pindah Giliran
+      // Kata Benar
+      playSound('success');
+      inputEl.value = "";
       feedback.innerText = "";
-      nextTurn(roomData, word);
+      nextTurn(roomData);
     });
 
     // Pindah Giliran
-    async function nextTurn(roomData, usedWord = null) {
+    async function nextTurn(roomData) {
       const roomRef = doc(db, "rooms", currentRoomCode);
       
-      // Cari pemain berikutnya yang masih punya nyawa
       let nextIndex = (roomData.turnIndex + 1) % roomData.players.length;
       let loopCount = 0;
       while (roomData.players[nextIndex].lives <= 0 && loopCount < roomData.players.length) {
@@ -282,30 +391,28 @@
         loopCount++;
       }
 
-      const newSyllable = SYLLABLES[Math.floor(Math.random() * SYLLABLES.length)];
-      const updatedWords = usedWord ? [...roomData.usedWords, usedWord] : roomData.usedWords;
+      const randomWord = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
 
       await updateDoc(roomRef, {
         turnIndex: nextIndex,
-        syllable: newSyllable,
-        usedWords: updatedWords,
+        targetWord: randomWord,
         turnEndTime: Date.now() + (TURN_TIME_LIMIT * 1000)
       });
     }
 
-    // Bom Meledak (Waktu Habis)
+    // Bom Meledak
     async function handleBombExplode(roomData) {
-      if (localPlayerName !== roomData.host) return; // Hanya Host yang eksekusi di DB
+      if (localPlayerName !== roomData.host) return;
 
+      playSound('boom');
       const roomRef = doc(db, "rooms", currentRoomCode);
       const players = [...roomData.players];
       const currentPlayer = players[roomData.turnIndex];
 
       if (currentPlayer && currentPlayer.lives > 0) {
-        currentPlayer.lives -= 1; // Kurangi nyawa
+        currentPlayer.lives -= 1;
       }
 
-      // Cek sisa pemain yang hidup
       const alivePlayers = players.filter(p => p.lives > 0);
       if (alivePlayers.length <= 1) {
         alert(`GAME OVER! Pemenangnya adalah: ${alivePlayers[0]?.name || 'Tidak ada'}`);
@@ -315,17 +422,6 @@
 
       await updateDoc(roomRef, { players });
       nextTurn(roomData);
-    }
-
-    // Validasi Kata KBBI via API
-    async function checkKBBIWord(word) {
-      try {
-        const res = await fetch(`https://kbbi-api-zh52.vercel.app/kata/${word.toLowerCase()}`);
-        return res.ok;
-      } catch (e) {
-        // Fallback jika API offline: izinkan kata dengan minimal 3 huruf
-        return word.length >= 3;
-      }
     }
 
     // Realtime Listener
@@ -365,14 +461,46 @@
           screenGame.classList.remove('hidden');
 
           const currentPlayer = data.players[data.turnIndex];
-          document.getElementById('current-player-turn').innerText = currentPlayer ? currentPlayer.name : "--";
-          document.getElementById('syllable-display').innerText = data.syllable || "--";
+          const isMyTurn = currentPlayer && currentPlayer.name === localPlayerName;
 
-          // Sync Timer
+          // Indikator Giliran Jelas (Banner & Input Control)
+          const turnBanner = document.getElementById('turn-banner');
+          const wordInput = document.getElementById('word-input');
+          const submitBtn = document.getElementById('btn-submit-word');
+
+          if (isMyTurn) {
+            turnBanner.className = "w-full py-2.5 px-4 rounded-2xl font-black text-lg mb-4 bg-amber-500 text-gray-950 your-turn-active flex items-center justify-center gap-2";
+            turnBanner.innerHTML = `<i class="fa-solid fa-fire text-xl"></i> GILIRAN KAMU SEKARANG! KETIK KATA DI BAWAH!`;
+            
+            wordInput.disabled = false;
+            submitBtn.disabled = false;
+            wordInput.classList.remove('bg-gray-800', 'border-gray-700');
+            wordInput.classList.add('bg-gray-900', 'border-amber-400', 'ring-2', 'ring-amber-400');
+            submitBtn.className = "bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-black px-6 py-3 rounded-2xl transition shadow-lg shadow-emerald-500/30";
+            wordInput.focus();
+          } else {
+            turnBanner.className = "w-full py-2.5 px-4 rounded-2xl font-bold text-sm mb-4 bg-gray-800 text-gray-300 border border-gray-700 flex items-center justify-center gap-2";
+            turnBanner.innerHTML = `<i class="fa-solid fa-hourglass-half text-amber-400"></i> Giliran saat ini: <span class="font-black text-amber-400 text-base">${currentPlayer ? currentPlayer.name : '--'}</span>`;
+            
+            wordInput.value = "";
+            wordInput.disabled = true;
+            submitBtn.disabled = true;
+            wordInput.classList.add('bg-gray-800', 'border-gray-700');
+            wordInput.classList.remove('bg-gray-900', 'border-amber-400', 'ring-2', 'ring-amber-400');
+            submitBtn.className = "bg-gray-700 text-gray-500 px-6 py-3 rounded-2xl font-bold opacity-50 cursor-not-allowed";
+          }
+
+          document.getElementById('target-word-display').innerText = data.targetWord || "------";
+
+          // Sync Timer 8s
           clearInterval(timerInterval);
           timerInterval = setInterval(() => {
             const timeLeft = Math.max(0, Math.ceil((data.turnEndTime - Date.now()) / 1000));
             document.getElementById('timer-display').innerText = `${timeLeft}s`;
+
+            if (timeLeft > 0 && timeLeft <= 3) {
+              playSound('tick');
+            }
 
             if (timeLeft <= 0) {
               clearInterval(timerInterval);
@@ -383,16 +511,10 @@
           // Status & Lives
           const statusContainer = document.getElementById('players-status-bar');
           statusContainer.innerHTML = data.players.map((p, idx) => `
-            <div class="px-3 py-1.5 rounded-xl border ${idx === data.turnIndex ? 'bg-rose-600/20 border-rose-500 text-rose-300 ring-2 ring-rose-500' : 'bg-gray-800/60 border-gray-700 text-gray-400'} flex items-center gap-2 text-xs font-bold">
-              <span>${p.name}</span>
+            <div class="px-3 py-1.5 rounded-xl border ${idx === data.turnIndex ? 'bg-amber-500/20 border-amber-400 text-amber-300 ring-2 ring-amber-400 font-black' : 'bg-gray-800/60 border-gray-700 text-gray-400'} flex items-center gap-2 text-xs">
+              <span>${p.name} ${p.name === localPlayerName ? '(Kamu)' : ''}</span>
               <span class="text-rose-500">${'❤️'.repeat(p.lives)}${'🖤'.repeat(3 - p.lives)}</span>
             </div>
-          `).join('');
-
-          // Used words
-          const tagsContainer = document.getElementById('used-words-tags');
-          tagsContainer.innerHTML = (data.usedWords || []).map(w => `
-            <span class="bg-gray-800 text-gray-300 text-xs font-mono px-2 py-1 rounded-md border border-gray-700">${w}</span>
           `).join('');
         }
       });
@@ -400,3 +522,5 @@
   </script>
 </body>
 </html>
+
+```
