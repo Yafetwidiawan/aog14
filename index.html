@@ -123,7 +123,7 @@
 
         <div class="my-2 bg-gray-800/80 px-8 py-5 rounded-2xl border border-gray-700/60 shadow-inner w-full">
           <p class="text-xs text-gray-400 mb-2 uppercase tracking-widest font-bold">Ketik Kata Ini Secepatnya:</p>
-          <span id="target-word-display" class="text-3xl sm:text-5xl font-black text-rose-400 tracking-wider font-mono select-none">------</span>
+          <span id="target-word-display" class="text-2xl sm:text-4xl font-black text-rose-400 tracking-wider font-mono select-none break-all">------</span>
         </div>
 
         <form id="word-form" class="w-full max-w-md flex flex-col sm:flex-row gap-2 mt-4">
@@ -156,34 +156,41 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const TURN_TIME_LIMIT = 8; // Max 8 Detik
+    const TURN_TIME_LIMIT_MS = 8000; // Tepat 8 Detik
 
-    // 200+ Kumpulan Kata Acak (Gabungan Umum & Komsel)
     const WORD_LIST = [
       "KOMSEL", "ALKITAB", "GEREJA", "PENDETA", "FIRMAN", "SEMANGAT", "BERSAMA", 
       "PEMUDA", "SAHABAT", "KASIH", "IBADAH", "PUJIAN", "LUKAS", "MATIUS", "MARKUS", 
-      "YOHANES", "MAZMUR", "AMEN", "BERKAT", "SYUKUR", "SUKACITA", "DAMAI", "LENTERA", 
-      "TERANG", "GARAM", "MALAIKAT", "ANUGERAH", "PENGHARAPAN", "HP", "LAPTOP", "KOPI", 
-      "SEPATU", "KEMEJA", "MAMBA", "SKINCARE", "SEBLAK", "BOBA", "CEMILAN", "KUCING", 
-      "ANJING", "GITAR", "DRUM", "PIANO", "MIC", "MUSIK", "LAGU", "NONGKRONG", "SANTAI", 
-      "JALAN", "MOBIL", "MOTOR", "HELM", "JAKET", "MANDI", "SABUN", "SAMPOT", "PARFUM", 
-      "DOMPET", "TAS", "PAYUNG", "HUJAN", "PANAS", "DINGIN", "ESKRIM", "PIZZA", "BURGER", 
-      "KENTANG", "NASIGORENG", "MIE", "TELUR", "ROTI", "SUSU", "TEH", "JUICE", "BAKSO", 
-      "SALAD", "BUAH", "PISANG", "MELON", "JERUK", "APEL", "ANGGUR", "SEMPURNA", "INDUS", 
-      "CINTA", "RINDU", "SENYUM", "TAWA", "BAHAGIA", "BANGGA", "FOKUS", "BELAJAR", "KULIAH", 
-      "KERJA", "TUGAS", "UJIAN", "PROYEK", "LIBUR", "WEEKEND", "PANTAI", "GUNUNG", "DANAU", 
-      "TAMAN", "KOTA", "DESA", "KAMPUNG", "RUMAH", "KAMAR", "KASUR", "BANTAL", "GULING", 
-      "SELIMUT", "LEMARI", "MEJA", "KURSI", "PINTU", "JENDELA", "LAMPU", "KIPAS", "AC", 
-      "JAM", "KALENDER", "KERTAS", "PENA", "BENSIN", "MANTAP", "GASKEN", "KODOK", "BURUNG", 
-      "IKAN", "GAJAH", "SINGA", "HARIMAU", "ZEBRA", "JERAPAH", "KELINCI", "PANDA", "MONYET", 
-      "KURA", "PAUS", "HIU", "CUMI", "UDANG", "KEPITING", "POHON", "DAUN", "BUNGA", "RUMPUT", 
-      "AWAN", "BINTANG", "BULAN", "MATAHARI", "PELANGI", "PETIR", "ANGIN", "OMBAK", "PASIR", 
-      "BATU", "TANAH", "EMAS", "PERAK", "PERMATA", "MAHKOTA", "ISTANA", "PAHLAWAN", "JUARA", 
-      "MENANG", "GAME", "LEVEL", "SKOR", "SULTAN", "JAGOAN", "BATAGOR", "MARTABAK", "TEKWAN", 
-      "RENDANG", "SOTO", "SATE", "GADO", "NUGGET", "SOSIS", "DONAT", "NUTELLA", "KEJU", 
-      "COKLAT", "VALENTINE", "NATAL", "PASKAH", "TAHUNBARU", "BOLA", "FUTSAL", "BASKET", 
-      "CESS", "SERU", "HEBOH", "KECE", "KEREN", "BESTIE", "BROTHER", "SISTER", "TEMAN", 
-      "KELUARGA", "BAPAK", "IBU", "KAKAK", "ADIK", "OMA", "OPA", "OM", "TANTE", "SEPUPU"
+      "YOHANES", "MAZMUR", "BERKAT", "SYUKUR", "SUKACITA", "DAMAI", "LENTERA", 
+      "TERANG", "GARAM", "MALAIKAT", "ANUGERAH", "PENGHARAPAN", "LAPTOP", "KOPI", 
+      "SEPATU", "KEMEJA", "SKINCARE", "SEBLAK", "CEMILAN", "KUCING", "ANJING", "GITAR", 
+      "DRUM", "PIANO", "MUSIK", "LAGU", "NONGKRONG", "SANTAI", "JALAN", "MOBIL", "MOTOR", 
+      "HELM", "JAKET", "PARFUM", "DOMPET", "PAYUNG", "HUJAN", "PANAS", "ESKRIM", "PIZZA", 
+      "BURGER", "KENTANG", "NASIGORENG", "TELUR", "ROTI", "SUSU", "BAKSO", "SALAD", 
+      "BUAH", "PISANG", "JERUK", "APEL", "ANGGUR", "SENYUM", "TAWA", "BAHAGIA", "BANGGA", 
+      "FOKUS", "BELAJAR", "KULIAH", "KERJA", "TUGAS", "UJIAN", "PROYEK", "LIBUR", "WEEKEND", 
+      "PANTAI", "GUNUNG", "DANAU", "TAMAN", "KOTA", "RUMAH", "KASUR", "BANTAL", "PINTU", 
+      "JENDELA", "LAMPU", "KALENDER", "KERTAS", "BENSIN", "MANTAP", "GASKEN", "KODOK", 
+      "BURUNG", "GAJAH", "HARIMAU", "KELINCI", "PANDA", "BUNGA", "RUMPUT", "AWAN", "BINTANG",
+      "MENGKALKULASI", "SOPISTIKASI", "INFRASTRUKTUR", "INTERPRETASI", "RESTRUKTURISASI",
+      "MENGKOMUNIKASIKAN", "DIFERENSIASI", "ELEKTRONIFIKASI", "PENGECUALIAN", "SINKRONISASI",
+      "KLASIFIKASI", "PENGEMBANGAN", "MENGKONFIRMASI", "DEREGULASI", "KARAKTERISTIK",
+      "PENGORGANISASIAN", "MENGAPRESIASI", "KORESPONDENSI", "KONSOLIDASI", "KONTEMPORER",
+      "REVOLUSIONER", "DIVERSIFIKASI", "RATIONALISASI", "PENGKONDISIAN", "TRANSFORMASIONAL",
+      "MENGATASNAMAKAN", "MEMPERTANGGUNGJAWABKAN", "PERSETUJUAN", "PENERJEMAHAN", "TIDAKSEIMBANG",
+      "KETERGANTUNGAN", "KETEBALAN", "PENGALAMATAN", "MEMPERTIMBANGKAN", "KETERBELAKANGAN",
+      "KEBANYAKAN", "PEMBERHENTIAN", "MENGKATEGORIKAN", "MENGAKOMODASI", "KEPRAKTISAN",
+      "KETERBATASAN", "PENGHANCURAN", "INTERAKSI", "MENGIMPLEMENTASIKAN", "PEMANDANGAN",
+      "PENGALAMATAN", "PEMROGRAMAN", "DISKRIMINASI", "LAKSAMANA", "SISTEMATIS",
+      "SPESIFIKASI", "DOKUMENTASI", "MEMPERSINGKAT", "MEMPERDAYAKAN", "KEBIJAKSANAAN",
+      "MENGALOKASIKAN", "PEMBELAJARAN", "PENGKHIANATAN", "MENGESAHKAN", "KONSEKUENSI",
+      "TIDAKTERDAPAT", "PENGKHUSUSAN", "MEMPERTAHANKAN", "KETERSEDIAAN", "MENGINTEGRASIKAN",
+      "PENGHILANGAN", "PENJELASAN", "PENGGABUNGAN", "MENGKLARIFIKASI", "KETERBELAKANGAN",
+      "PERHITUNGAN", "PERBANDINGAN", "MEMPERPANJANG", "MEMPERSIAPKAN", "KETERLIBATAN",
+      "PENGABDIAN", "KEBERSAMAAN", "PERSEMAYAMAN", "KETERAMPILAN", "PEMBERDAYAAN",
+      "PENGHALUSAN", "MEMPERMASALAHKAN", "MEMPERINDAH", "KEPEMIMPINAN", "PENGELOLAAN",
+      "MEMPERINDAH", "PERTIMBANGAN", "MENGINSPIRASI", "MEMPERSIAPKAN", "MEMPERCEPAT",
+      "PENGABSTRAKAN", "PENGISOLASIAN", "PENGHARIANKAN", "PENGKOORDINASIAN", "PERLINDUNGAN"
     ];
 
     let currentRoomCode = null;
@@ -191,6 +198,7 @@
     let unsubscribeRoom = null;
     let timerInterval = null;
     let soundEnabled = false;
+    let isExploding = false; // Flag penahan ganda
 
     // Web Audio Synthesizer
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -306,7 +314,7 @@
         status: "playing",
         targetWord: randomWord,
         turnIndex: 0,
-        turnEndTime: Date.now() + (TURN_TIME_LIMIT * 1000)
+        turnEndTime: Date.now() + TURN_TIME_LIMIT_MS
       });
     });
 
@@ -376,13 +384,14 @@
       await updateDoc(roomRef, {
         turnIndex: nextIndex,
         targetWord: randomWord,
-        turnEndTime: Date.now() + (TURN_TIME_LIMIT * 1000)
+        turnEndTime: Date.now() + TURN_TIME_LIMIT_MS
       });
     }
 
-    // Bom Meledak
+    // Bom Meledak (Host Only)
     async function handleBombExplode(roomData) {
-      if (localPlayerName !== roomData.host) return;
+      if (localPlayerName !== roomData.host || isExploding) return;
+      isExploding = true;
 
       playSound('boom');
       const roomRef = doc(db, "rooms", currentRoomCode);
@@ -397,11 +406,13 @@
       if (alivePlayers.length <= 1) {
         alert(`GAME OVER! Pemenangnya adalah: ${alivePlayers[0]?.name || 'Tidak ada'}`);
         await updateDoc(roomRef, { status: "waiting", players: players.map(p => ({...p, lives: 3})) });
+        isExploding = false;
         return;
       }
 
       await updateDoc(roomRef, { players });
-      nextTurn(roomData);
+      await nextTurn(roomData);
+      isExploding = false;
     }
 
     // Realtime Listener
@@ -414,7 +425,7 @@
         const data = snapshot.data();
 
         if (data.status === "waiting") {
-          clearInterval(timerInterval);
+          if (timerInterval) clearInterval(timerInterval);
           screenLobby.classList.add('hidden');
           screenWaiting.classList.remove('hidden');
           screenGame.classList.add('hidden');
@@ -442,6 +453,27 @@
 
           const currentPlayer = data.players[data.turnIndex];
           const isMyTurn = currentPlayer && currentPlayer.name === localPlayerName;
+
+          // Timer Visual Synchronizer berbasis Turn Expiry
+          if (timerInterval) clearInterval(timerInterval);
+          timerInterval = setInterval(() => {
+            const now = Date.now();
+            const targetTime = data.turnEndTime || (now + TURN_TIME_LIMIT_MS);
+            const remaining = Math.max(0, Math.ceil((targetTime - now) / 1000));
+
+            document.getElementById('timer-display').innerText = `${remaining}s`;
+
+            if (remaining > 0 && remaining <= 3) {
+              playSound('tick');
+            }
+
+            if (remaining === 0) {
+              clearInterval(timerInterval);
+              if (localPlayerName === data.host) {
+                handleBombExplode(data);
+              }
+            }
+          }, 300);
 
           // Indikator Giliran Jelas (Banner & Input Control)
           const turnBanner = document.getElementById('turn-banner');
@@ -471,22 +503,6 @@
           }
 
           document.getElementById('target-word-display').innerText = data.targetWord || "------";
-
-          // Sync Timer 8s
-          clearInterval(timerInterval);
-          timerInterval = setInterval(() => {
-            const timeLeft = Math.max(0, Math.ceil((data.turnEndTime - Date.now()) / 1000));
-            document.getElementById('timer-display').innerText = `${timeLeft}s`;
-
-            if (timeLeft > 0 && timeLeft <= 3) {
-              playSound('tick');
-            }
-
-            if (timeLeft <= 0) {
-              clearInterval(timerInterval);
-              handleBombExplode(data);
-            }
-          }, 500);
 
           // Status & Lives
           const statusContainer = document.getElementById('players-status-bar');
