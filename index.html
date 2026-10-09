@@ -100,7 +100,6 @@
 
     <!-- Screen 3: Game Arena -->
     <div id="screen-game" class="hidden w-full max-w-2xl flex flex-col items-center">
-      <!-- Top Bar (Back/Reset Button) -->
       <div class="w-full flex justify-between items-center mb-4">
         <button id="btn-reset-game" class="bg-gray-800 hover:bg-rose-600/80 text-gray-300 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 border border-gray-700">
           <i class="fa-solid fa-arrow-left"></i> Reset & Kembali ke Lobby
@@ -110,16 +109,12 @@
       <div id="players-status-bar" class="w-full flex flex-wrap justify-center gap-3 mb-6"></div>
 
       <div class="relative w-full bg-gray-900/90 border border-gray-800 p-8 rounded-3xl text-center shadow-2xl flex flex-col items-center">
-        <!-- Bomb & Timer -->
         <div id="bomb-container" class="relative mb-4">
           <i class="fa-solid fa-bomb text-7xl text-rose-500 bomb-pulse"></i>
           <span id="timer-display" class="absolute -top-3 -right-6 bg-rose-600 text-white font-black text-xl px-3.5 py-1 rounded-full border-4 border-gray-900 shadow-xl">8s</span>
         </div>
 
-        <!-- Indicator Turn Banners -->
-        <div id="turn-banner" class="w-full py-2.5 px-4 rounded-2xl font-black text-lg mb-4 transition-all duration-300 flex items-center justify-center gap-2">
-          <!-- Banner dynamic Text -->
-        </div>
+        <div id="turn-banner" class="w-full py-2.5 px-4 rounded-2xl font-black text-lg mb-4 transition-all duration-300 flex items-center justify-center gap-2"></div>
 
         <div class="my-2 bg-gray-800/80 px-8 py-5 rounded-2xl border border-gray-700/60 shadow-inner w-full">
           <p class="text-xs text-gray-400 mb-2 uppercase tracking-widest font-bold">Ketik Kata Ini Secepatnya:</p>
@@ -156,7 +151,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const MAX_TIMER = 8; // Tepat 8 Detik
+    const MAX_TIMER = 8; // Murni 8 Detik per giliran
 
     const WORD_LIST = [
       "KOMSEL", "ALKITAB", "GEREJA", "PENDETA", "FIRMAN", "SEMANGAT", "BERSAMA", 
@@ -196,7 +191,7 @@
     let currentRoomCode = null;
     let localPlayerName = null;
     let unsubscribeRoom = null;
-    let hostTimerInterval = null;
+    let hostLoopInterval = null;
     let soundEnabled = false;
 
     // Web Audio Synthesizer
@@ -254,7 +249,7 @@
     const screenWaiting = document.getElementById('screen-waiting');
     const screenGame = document.getElementById('screen-game');
 
-    // Host Room
+    // Create Room
     document.getElementById('btn-create-room').addEventListener('click', async () => {
       const name = document.getElementById('host-name').value.trim();
       if (!name) return alert("Masukkan nama Host!");
@@ -321,7 +316,9 @@
     document.getElementById('btn-reset-game').addEventListener('click', async () => {
       if (!currentRoomCode) return;
       if (confirm("Yakin ingin mereset permainan dan kembali ke lobby?")) {
-        if (hostTimerInterval) clearInterval(hostTimerInterval);
+        if (hostLoopInterval) clearInterval(hostLoopInterval);
+        hostLoopInterval = null;
+
         const roomRef = doc(db, "rooms", currentRoomCode);
         const roomSnap = await getDoc(roomRef);
         if (roomSnap.exists()) {
@@ -329,7 +326,8 @@
           const resetPlayers = roomData.players.map(p => ({ ...p, lives: 3 }));
           await updateDoc(roomRef, {
             status: "waiting",
-            players: resetPlayers
+            players: resetPlayers,
+            timeLeft: MAX_TIMER
           });
         }
       }
@@ -402,7 +400,9 @@
       const alivePlayers = players.filter(p => p.lives > 0);
       if (alivePlayers.length <= 1) {
         alert(`GAME OVER! Pemenangnya adalah: ${alivePlayers[0]?.name || 'Tidak ada'}`);
-        await updateDoc(roomRef, { status: "waiting", players: players.map(p => ({...p, lives: 3})) });
+        if (hostLoopInterval) clearInterval(hostLoopInterval);
+        hostLoopInterval = null;
+        await updateDoc(roomRef, { status: "waiting", players: players.map(p => ({...p, lives: 3})), timeLeft: MAX_TIMER });
         return;
       }
 
@@ -410,11 +410,11 @@
       await nextTurn(roomData);
     }
 
-    // Host Central Clock Loop (HANYA HOST YANG JALANKAN INI)
-    function startCentralHostLoop(code) {
-      if (hostTimerInterval) clearInterval(hostTimerInterval);
+    // Host Timer Loop Tunggal (Hanya Host Yang Menjalankan)
+    function startCentralHostTimer(code) {
+      if (hostLoopInterval) return; // Mencegah pemanggilan berulang
 
-      hostTimerInterval = setInterval(async () => {
+      hostLoopInterval = setInterval(async () => {
         const roomRef = doc(db, "rooms", code);
         const roomSnap = await getDoc(roomRef);
         if (!roomSnap.exists()) return;
@@ -430,7 +430,7 @@
       }, 1000);
     }
 
-    // Realtime Listener (Hanya UI Display)
+    // Realtime Listener
     function listenToRoom(code) {
       if (unsubscribeRoom) unsubscribeRoom();
 
@@ -440,7 +440,10 @@
         const data = snapshot.data();
 
         if (data.status === "waiting") {
-          if (hostTimerInterval) clearInterval(hostTimerInterval);
+          if (hostLoopInterval) {
+            clearInterval(hostLoopInterval);
+            hostLoopInterval = null;
+          }
           screenLobby.classList.add('hidden');
           screenWaiting.classList.remove('hidden');
           screenGame.classList.add('hidden');
@@ -466,15 +469,15 @@
           screenWaiting.classList.add('hidden');
           screenGame.classList.remove('hidden');
 
-          // Jalankan Host Loop jika localPlayerName adalah Host
-          if (localPlayerName === data.host && !hostTimerInterval) {
-            startCentralHostLoop(code);
+          // Jalankan timer terpusat HANYA jika perangkat saat ini adalah Host
+          if (localPlayerName === data.host) {
+            startCentralHostTimer(code);
           }
 
           const currentPlayer = data.players[data.turnIndex];
           const isMyTurn = currentPlayer && currentPlayer.name === localPlayerName;
 
-          // Render Timer Display Sesuai State Firestore (Murni Tampilan)
+          // Render Angka Timer Sesuai Nilai Terkini di Database
           const currentSec = (data.timeLeft !== undefined) ? data.timeLeft : MAX_TIMER;
           document.getElementById('timer-display').innerText = `${currentSec}s`;
 
@@ -482,7 +485,7 @@
             playSound('tick');
           }
 
-          // Indikator Giliran Jelas (Banner & Input Control)
+          // Indikator Giliran (Banner & Input Control)
           const turnBanner = document.getElementById('turn-banner');
           const wordInput = document.getElementById('word-input');
           const submitBtn = document.getElementById('btn-submit-word');
