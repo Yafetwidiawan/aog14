@@ -156,7 +156,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const TURN_TIME_LIMIT_MS = 8000; // Tepat 8 Detik
+    const MAX_TIMER = 8; // Tepat 8 Detik
 
     const WORD_LIST = [
       "KOMSEL", "ALKITAB", "GEREJA", "PENDETA", "FIRMAN", "SEMANGAT", "BERSAMA", 
@@ -196,9 +196,8 @@
     let currentRoomCode = null;
     let localPlayerName = null;
     let unsubscribeRoom = null;
-    let timerInterval = null;
+    let hostTimerInterval = null;
     let soundEnabled = false;
-    let isExploding = false; // Flag penahan ganda
 
     // Web Audio Synthesizer
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -271,7 +270,7 @@
         players: [{ name: name, lives: 3 }],
         turnIndex: 0,
         targetWord: "",
-        turnEndTime: 0,
+        timeLeft: MAX_TIMER,
         timestamp: Date.now()
       });
 
@@ -314,7 +313,7 @@
         status: "playing",
         targetWord: randomWord,
         turnIndex: 0,
-        turnEndTime: Date.now() + TURN_TIME_LIMIT_MS
+        timeLeft: MAX_TIMER
       });
     });
 
@@ -322,6 +321,7 @@
     document.getElementById('btn-reset-game').addEventListener('click', async () => {
       if (!currentRoomCode) return;
       if (confirm("Yakin ingin mereset permainan dan kembali ke lobby?")) {
+        if (hostTimerInterval) clearInterval(hostTimerInterval);
         const roomRef = doc(db, "rooms", currentRoomCode);
         const roomSnap = await getDoc(roomRef);
         if (roomSnap.exists()) {
@@ -365,7 +365,7 @@
       playSound('success');
       inputEl.value = "";
       feedback.innerText = "";
-      nextTurn(roomData);
+      await nextTurn(roomData);
     });
 
     // Pindah Giliran
@@ -384,15 +384,12 @@
       await updateDoc(roomRef, {
         turnIndex: nextIndex,
         targetWord: randomWord,
-        turnEndTime: Date.now() + TURN_TIME_LIMIT_MS
+        timeLeft: MAX_TIMER
       });
     }
 
     // Bom Meledak (Host Only)
     async function handleBombExplode(roomData) {
-      if (localPlayerName !== roomData.host || isExploding) return;
-      isExploding = true;
-
       playSound('boom');
       const roomRef = doc(db, "rooms", currentRoomCode);
       const players = [...roomData.players];
@@ -406,16 +403,34 @@
       if (alivePlayers.length <= 1) {
         alert(`GAME OVER! Pemenangnya adalah: ${alivePlayers[0]?.name || 'Tidak ada'}`);
         await updateDoc(roomRef, { status: "waiting", players: players.map(p => ({...p, lives: 3})) });
-        isExploding = false;
         return;
       }
 
       await updateDoc(roomRef, { players });
       await nextTurn(roomData);
-      isExploding = false;
     }
 
-    // Realtime Listener
+    // Host Central Clock Loop (HANYA HOST YANG JALANKAN INI)
+    function startCentralHostLoop(code) {
+      if (hostTimerInterval) clearInterval(hostTimerInterval);
+
+      hostTimerInterval = setInterval(async () => {
+        const roomRef = doc(db, "rooms", code);
+        const roomSnap = await getDoc(roomRef);
+        if (!roomSnap.exists()) return;
+
+        const data = roomSnap.data();
+        if (data.status !== "playing") return;
+
+        if (data.timeLeft > 0) {
+          await updateDoc(roomRef, { timeLeft: data.timeLeft - 1 });
+        } else {
+          await handleBombExplode(data);
+        }
+      }, 1000);
+    }
+
+    // Realtime Listener (Hanya UI Display)
     function listenToRoom(code) {
       if (unsubscribeRoom) unsubscribeRoom();
 
@@ -425,7 +440,7 @@
         const data = snapshot.data();
 
         if (data.status === "waiting") {
-          if (timerInterval) clearInterval(timerInterval);
+          if (hostTimerInterval) clearInterval(hostTimerInterval);
           screenLobby.classList.add('hidden');
           screenWaiting.classList.remove('hidden');
           screenGame.classList.add('hidden');
@@ -451,29 +466,21 @@
           screenWaiting.classList.add('hidden');
           screenGame.classList.remove('hidden');
 
+          // Jalankan Host Loop jika localPlayerName adalah Host
+          if (localPlayerName === data.host && !hostTimerInterval) {
+            startCentralHostLoop(code);
+          }
+
           const currentPlayer = data.players[data.turnIndex];
           const isMyTurn = currentPlayer && currentPlayer.name === localPlayerName;
 
-          // Timer Visual Synchronizer berbasis Turn Expiry
-          if (timerInterval) clearInterval(timerInterval);
-          timerInterval = setInterval(() => {
-            const now = Date.now();
-            const targetTime = data.turnEndTime || (now + TURN_TIME_LIMIT_MS);
-            const remaining = Math.max(0, Math.ceil((targetTime - now) / 1000));
+          // Render Timer Display Sesuai State Firestore (Murni Tampilan)
+          const currentSec = (data.timeLeft !== undefined) ? data.timeLeft : MAX_TIMER;
+          document.getElementById('timer-display').innerText = `${currentSec}s`;
 
-            document.getElementById('timer-display').innerText = `${remaining}s`;
-
-            if (remaining > 0 && remaining <= 3) {
-              playSound('tick');
-            }
-
-            if (remaining === 0) {
-              clearInterval(timerInterval);
-              if (localPlayerName === data.host) {
-                handleBombExplode(data);
-              }
-            }
-          }, 300);
+          if (currentSec > 0 && currentSec <= 3) {
+            playSound('tick');
+          }
 
           // Indikator Giliran Jelas (Banner & Input Control)
           const turnBanner = document.getElementById('turn-banner');
